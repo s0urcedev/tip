@@ -44,7 +44,56 @@ def get_spent_time(start: str, end: str) -> int: # functions for spent time
         delta['seconds'] += 60
     return f"{delta['days']} days, {delta['hours']} hours {delta['minutes']} minutes {delta['seconds']} seconds"
 
+def is_empty(path: str) -> bool: # function for checking is the file empty
+    with open(path, 'r') as tl:
+        text = tl.read()
+    if text == "" or text == " " * len(text):
+        return True
+    else:
+        return False
+
+def init_new() -> None: # function for initing tip-lock.json
+    with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
+        tl.write(json.dumps({USER: {"tasks": {}}}, ensure_ascii=False, indent=4))
+
+def init() -> None: # function for initing tip-lock.json
+    if not os.path.exists(f"{APP_PATH}/tip-lock.json"):
+        init_new()
+    elif is_empty(f"{APP_PATH}/tip-lock.json"):
+        init_new()
+    else:
+        with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
+            tip_lock: dict = json.loads(tl.read())
+        tip_lock[USER] = {"tasks" : {}}
+        with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
+            tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
+
+def create_if_no() -> None: # function for creating tip-lock.json if there is no one
+    if not os.path.exists(f"{APP_PATH}/tip-lock.json"):
+        init_new()
+    elif is_empty(f"{APP_PATH}/tip-lock.json"):
+        init_new()
+    else:
+        with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
+            tip_lock: dict = json.loads(tl.read())
+        try:
+            tip_lock[USER]
+        except Exception:
+            tip_lock[USER] = {"tasks" : {}}
+            with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
+                tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
+            return
+        try:
+            tip_lock[USER]["tasks"]
+        except Exception:
+            tip_lock[USER]["tasks"] = {}
+            with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
+                tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
+            return
+
+
 def list_tasks() -> None: # function for printing list of tasks
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -70,6 +119,7 @@ def list_tasks() -> None: # function for printing list of tasks
         print("You don't have tasks")
 
 def open_task(name: str) -> None: # function for opening task
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     tip_lock[USER]["tasks"][name] = {
@@ -81,6 +131,7 @@ def open_task(name: str) -> None: # function for opening task
         tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
         
 def close_task(name: str) -> None: # function for closing task
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     tip_lock[USER]["tasks"][name] = {
@@ -94,6 +145,7 @@ def close_task(name: str) -> None: # function for closing task
     print(f"You spent on this task: {time_spent}")
 
 def delete_task(name: str) -> None: # function for deleting task
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     tip_lock[USER]["tasks"].pop(name, {})
@@ -101,6 +153,7 @@ def delete_task(name: str) -> None: # function for deleting task
         tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
     
 def search_year(year: str) -> None: # function for searching by year
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -127,6 +180,7 @@ def search_year(year: str) -> None: # function for searching by year
         print("Task with this filter not found")
 
 def search_month(month: str) -> None: # function for searching by month
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -153,6 +207,7 @@ def search_month(month: str) -> None: # function for searching by month
         print("Task with this filter not found")
 
 def search_day(day: str) -> None: # function for searching by day
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -179,6 +234,7 @@ def search_day(day: str) -> None: # function for searching by day
         print("Task with this filter not found")
 
 def search_hour(hour: str) -> None: # function for searching by hour
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -205,6 +261,7 @@ def search_hour(hour: str) -> None: # function for searching by hour
         print("Task with this filter not found")
 
 def search_minute(minute: str) -> None: # function for searching by minute
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -231,6 +288,7 @@ def search_minute(minute: str) -> None: # function for searching by minute
         print("Task with this filter not found")
 
 def search_second(second: str) -> None: # function for searching by second
+    create_if_no()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
@@ -261,8 +319,7 @@ if __name__ == "__main__":
         print("Hello, I'm tip")
         print("\nWhat I can do:\ninit — init list for user\nlist — show all tasks\nopen — open task\nclose — close task\nsearch — search tasks")
     elif sys.argv[1] == "init": # 'tip init'
-        with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
-            tl.write(json.dumps({USER: {"tasks": {}}}, ensure_ascii=False, indent=4))
+        init()
     elif sys.argv[1] == "list": # 'tip list'
         list_tasks()
     elif sys.argv[1] == "open" and len(sys.argv) > 2: # 'tip open'
