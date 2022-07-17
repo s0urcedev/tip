@@ -56,22 +56,21 @@ def init_new() -> None: # function for initing tip-lock.json
     with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
         tl.write(json.dumps({USER: {"tasks": {}}}, ensure_ascii=False, indent=4))
 
+def init_new_user() -> None: # function for initing new user in tip-lock.json
+    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
+        tip_lock: dict = json.loads(tl.read())
+    tip_lock[USER] = {"tasks" : {}}
+    with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
+        tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
+
 def init() -> None: # function for initing tip-lock.json
-    if not os.path.exists(f"{APP_PATH}/tip-lock.json"):
-        init_new()
-    elif is_empty(f"{APP_PATH}/tip-lock.json"):
+    if not os.path.exists(f"{APP_PATH}/tip-lock.json") or is_empty(f"{APP_PATH}/tip-lock.json"):
         init_new()
     else:
-        with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-            tip_lock: dict = json.loads(tl.read())
-        tip_lock[USER] = {"tasks" : {}}
-        with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
-            tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
+        init_new_user()
 
-def create_if_no() -> None: # function for creating tip-lock.json if there is no one
-    if not os.path.exists(f"{APP_PATH}/tip-lock.json"):
-        init_new()
-    elif is_empty(f"{APP_PATH}/tip-lock.json"):
+def create_if_not() -> None: # function for creating tip-lock.json if there is no one
+    if not os.path.exists(f"{APP_PATH}/tip-lock.json") or is_empty(f"{APP_PATH}/tip-lock.json"):
         init_new()
     else:
         with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
@@ -91,35 +90,8 @@ def create_if_no() -> None: # function for creating tip-lock.json if there is no
                 tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
             return
 
-
-def list_tasks() -> None: # function for printing list of tasks
-    create_if_no()
-    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-        tip_lock: dict = json.loads(tl.read())
-    opened: list[str] = []
-    closed: list[str] = []
-    max_len: int = 0
-    for key in tip_lock[USER]["tasks"]:
-        if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
-            open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-            opened.append(f"OPENED: {key} [{open_date}]")
-            if len(f"OPENED: {key} [{open_date}]") > max_len:
-                max_len = len(f"OPENED: {key} [{open_date}]")
-        elif tip_lock[USER]["tasks"][key]["state"] == "CLOSED":
-            open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-            close_date: str = tip_lock[USER]["tasks"][key]["close_date"]
-            closed.append(f"CLOSED: {key} [{open_date} — {close_date}]")
-            if len(f"CLOSED: {key} [{open_date} — {close_date}]") > max_len:
-                max_len = len(f"CLOSED: {key} [{open_date} — {close_date}]")
-    if max_len > 0:
-        print('\n'.join(closed))
-        print('-' * max_len)
-        print('\n'.join(opened))
-    else:
-        print("You don't have tasks")
-
 def open_task(name: str) -> None: # function for opening task
-    create_if_no()
+    create_if_not()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     tip_lock[USER]["tasks"][name] = {
@@ -131,7 +103,7 @@ def open_task(name: str) -> None: # function for opening task
         tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
         
 def close_task(name: str) -> None: # function for closing task
-    create_if_no()
+    create_if_not()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     tip_lock[USER]["tasks"][name] = {
@@ -145,157 +117,40 @@ def close_task(name: str) -> None: # function for closing task
     print(f"You spent on this task: {time_spent}")
 
 def delete_task(name: str) -> None: # function for deleting task
-    create_if_no()
+    create_if_not()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     tip_lock[USER]["tasks"].pop(name, {})
     with open(f"{APP_PATH}/tip-lock.json", 'w') as tl:
         tl.write(json.dumps(tip_lock, ensure_ascii=False, indent=4))
-    
-def search_year(year: str) -> None: # function for searching by year
-    create_if_no()
-    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-        tip_lock: dict = json.loads(tl.read())
-    opened: list[str] = []
-    closed: list[str] = []
-    max_len: int = 0
-    for key in tip_lock[USER]["tasks"]:
-        if datetime.datetime.strptime(tip_lock[USER]["tasks"][key]["open_date"], "%Y-%m-%d %H:%M:%S").year == int(year):
-            if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                opened.append(f"OPENED: {key} [{open_date}]")
-                if len(f"OPENED: {key} [{open_date}]") > max_len:
-                    max_len = len(f"OPENED: {key} [{open_date}]")
-            elif tip_lock[USER]["tasks"][key]["state"] == "CLOSED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                close_date: str = tip_lock[USER]["tasks"][key]["close_date"]
-                closed.append(f"CLOSED: {key} [{open_date} — {close_date}]")
-                if len(f"CLOSED: {key} [{open_date} — {close_date}]") > max_len:
-                    max_len = len(f"CLOSED: {key} [{open_date} — {close_date}]")
-    if max_len > 0:
-        print('\n'.join(closed))
-        print('-' * max_len)
-        print('\n'.join(opened))
-    else:
-        print("Task with this filter not found")
 
-def search_month(month: str) -> None: # function for searching by month
-    create_if_no()
-    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-        tip_lock: dict = json.loads(tl.read())
-    opened: list[str] = []
-    closed: list[str] = []
-    max_len: int = 0
-    for key in tip_lock[USER]["tasks"]:
-        if datetime.datetime.strptime(tip_lock[USER]["tasks"][key]["open_date"], "%Y-%m-%d %H:%M:%S").month == int(month):
-            if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                opened.append(f"OPENED: {key} [{open_date}]")
-                if len(f"OPENED: {key} [{open_date}]") > max_len:
-                    max_len = len(f"OPENED: {key} [{open_date}]")
-            elif tip_lock[USER]["tasks"][key]["state"] == "CLOSED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                close_date: str = tip_lock[USER]["tasks"][key]["close_date"]
-                closed.append(f"CLOSED: {key} [{open_date} — {close_date}]")
-                if len(f"CLOSED: {key} [{open_date} — {close_date}]") > max_len:
-                    max_len = len(f"CLOSED: {key} [{open_date} — {close_date}]")
-    if max_len > 0:
-        print('\n'.join(closed))
-        print('-' * max_len)
-        print('\n'.join(opened))
+def get_datetime_part(date: str, mode: int) -> int | datetime.date: # function for getting part of a date
+    if mode == "year":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").year
+    elif mode == "month":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").month
+    elif mode == "day":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").day
+    elif mode == "hour":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").year
+    elif mode == "minute":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").minute
+    elif mode == "second":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").second
+    elif mode == "date":
+        return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").date()
     else:
-        print("Task with this filter not found")
+        return -1
 
-def search_day(day: str) -> None: # function for searching by day
-    create_if_no()
+def search(mode: str, filter: int | datetime.datetime) -> None: # function for searching by mode and number
+    create_if_not()
     with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
         tip_lock: dict = json.loads(tl.read())
     opened: list[str] = []
     closed: list[str] = []
     max_len: int = 0
     for key in tip_lock[USER]["tasks"]:
-        if datetime.datetime.strptime(tip_lock[USER]["tasks"][key]["open_date"], "%Y-%m-%d %H:%M:%S").day == int(day):
-            if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                opened.append(f"OPENED: {key} [{open_date}]")
-                if len(f"OPENED: {key} [{open_date}]") > max_len:
-                    max_len = len(f"OPENED: {key} [{open_date}]")
-            elif tip_lock[USER]["tasks"][key]["state"] == "CLOSED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                close_date: str = tip_lock[USER]["tasks"][key]["close_date"]
-                closed.append(f"CLOSED: {key} [{open_date} — {close_date}]")
-                if len(f"CLOSED: {key} [{open_date} — {close_date}]") > max_len:
-                    max_len = len(f"CLOSED: {key} [{open_date} — {close_date}]")
-    if max_len > 0:
-        print('\n'.join(closed))
-        print('-' * max_len)
-        print('\n'.join(opened))
-    else:
-        print("Task with this filter not found")
-
-def search_hour(hour: str) -> None: # function for searching by hour
-    create_if_no()
-    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-        tip_lock: dict = json.loads(tl.read())
-    opened: list[str] = []
-    closed: list[str] = []
-    max_len: int = 0
-    for key in tip_lock[USER]["tasks"]:
-        if datetime.datetime.strptime(tip_lock[USER]["tasks"][key]["open_date"], "%Y-%m-%d %H:%M:%S").hour == int(hour):
-            if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                opened.append(f"OPENED: {key} [{open_date}]")
-                if len(f"OPENED: {key} [{open_date}]") > max_len:
-                    max_len = len(f"OPENED: {key} [{open_date}]")
-            elif tip_lock[USER]["tasks"][key]["state"] == "CLOSED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                close_date: str = tip_lock[USER]["tasks"][key]["close_date"]
-                closed.append(f"CLOSED: {key} [{open_date} — {close_date}]")
-                if len(f"CLOSED: {key} [{open_date} — {close_date}]") > max_len:
-                    max_len = len(f"CLOSED: {key} [{open_date} — {close_date}]")
-    if max_len > 0:
-        print('\n'.join(closed))
-        print('-' * max_len)
-        print('\n'.join(opened))
-    else:
-        print("Task with this filter not found")
-
-def search_minute(minute: str) -> None: # function for searching by minute
-    create_if_no()
-    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-        tip_lock: dict = json.loads(tl.read())
-    opened: list[str] = []
-    closed: list[str] = []
-    max_len: int = 0
-    for key in tip_lock[USER]["tasks"]:
-        if datetime.datetime.strptime(tip_lock[USER]["tasks"][key]["open_date"], "%Y-%m-%d %H:%M:%S").minute == int(minute):
-            if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                opened.append(f"OPENED: {key} [{open_date}]")
-                if len(f"OPENED: {key} [{open_date}]") > max_len:
-                    max_len = len(f"OPENED: {key} [{open_date}]")
-            elif tip_lock[USER]["tasks"][key]["state"] == "CLOSED":
-                open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
-                close_date: str = tip_lock[USER]["tasks"][key]["close_date"]
-                closed.append(f"CLOSED: {key} [{open_date} — {close_date}]")
-                if len(f"CLOSED: {key} [{open_date} — {close_date}]") > max_len:
-                    max_len = len(f"CLOSED: {key} [{open_date} — {close_date}]")
-    if max_len > 0:
-        print('\n'.join(closed))
-        print('-' * max_len)
-        print('\n'.join(opened))
-    else:
-        print("Task with this filter not found")
-
-def search_second(second: str) -> None: # function for searching by second
-    create_if_no()
-    with open(f"{APP_PATH}/tip-lock.json", 'r') as tl:
-        tip_lock: dict = json.loads(tl.read())
-    opened: list[str] = []
-    closed: list[str] = []
-    max_len: int = 0
-    for key in tip_lock[USER]["tasks"]:
-        if datetime.datetime.strptime(tip_lock[USER]["tasks"][key]["open_date"], "%Y-%m-%d %H:%M:%S").second == int(second):
+        if get_datetime_part(tip_lock[USER]["tasks"][key]["open_date"], mode) == filter:
             if tip_lock[USER]["tasks"][key]["state"] == "OPENED":
                 open_date: str = tip_lock[USER]["tasks"][key]["open_date"]
                 opened.append(f"OPENED: {key} [{open_date}]")
@@ -320,8 +175,10 @@ if __name__ == "__main__":
         print("\nWhat I can do:\ninit — init list for user\nlist — show all tasks\nopen — open task\nclose — close task\nsearch — search tasks")
     elif sys.argv[1] == "init": # 'tip init'
         init()
+    elif sys.argv[1] == "clear": # 'tip clear'
+        init_new_user()
     elif sys.argv[1] == "list": # 'tip list'
-        list_tasks()
+        search("", -1)
     elif sys.argv[1] == "open" and len(sys.argv) > 2: # 'tip open'
         for i in range(2, len(sys.argv)):
             open_task(sys.argv[i])
@@ -332,17 +189,9 @@ if __name__ == "__main__":
         for i in range(2, len(sys.argv)):
             delete_task(sys.argv[i])
     elif sys.argv[1] == "search" and len(sys.argv) == 4: # 'tip search'
-        if sys.argv[2] == "year": # 'tip search year'
-            search_year(sys.argv[3])
-        elif sys.argv[2] == "month": # 'tip search month'
-            search_month(sys.argv[3])
-        elif sys.argv[2] == "day": # 'tip search day'
-            search_day(sys.argv[3])
-        elif sys.argv[2] == "hour": # 'tip search hour'
-            search_hour(sys.argv[3])
-        elif sys.argv[2] == "minute": # 'tip search minute'
-            search_minute(sys.argv[3])
-        elif sys.argv[2] == "second": # 'tip search second'
-            search_second(sys.argv[3])
+        if sys.argv[2] == "date":
+            search("date", datetime.datetime.strptime(sys.argv[3], "%Y-%m-%d").date())
+        else:
+            search(sys.argv[2], int(sys.argv[3]))
     else:
         print("Uncorrect arguments")
